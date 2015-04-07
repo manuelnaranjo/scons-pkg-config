@@ -16,6 +16,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from functools import partial
+
 def exists(env):
     # we suppose the tool is always available
     return True
@@ -23,21 +25,49 @@ def exists(env):
 def PkgConfigSupported(context, version=None):
     if version is None:
         version = '0.25'
-    context.Message('Checking for pkg-config with version >= %s...' % version)
-    instruction = 'pkg-config --atleast-pkgconfig-version=%s' % version
+    text = 'Checking for ${PKGCONFIG_BIN} with version >= %s...' % version
+    instruction = '${PKGCONFIG_BIN} --atleast-pkgconfig-version=%s' % version
+
+    context.Message(context.env.subst(text))
     ret = context.TryAction(instruction)[0]
-    context.Result(ret)
-    return ret
+    context.Result(ret == 1)
+    return ret == 1
 
 def PkgConfigCheck(context, name):
     context.Message('Checking for %s...' % name)
-    ret = context.TryAction('pkg-config --exists \'%s\'' % name)[0]
+    ret = context.TryAction('${PKGCONFIG_BIN} --exists \'%s\'' % name)[0]
     context.Result(ret)
     return ret
+
+def ParseFlags(out, env, cmd):
+    out.update(env.ParseFlags(cmd))
+    for key, val in list(out.iteritems()):
+        if len(out[key]) == 0:
+            out.pop(key)
+
+def PkgConfigGetLibs(env, name):
+    out = dict()
+    env.ParseConfig('pkg-config --libs %s' % name, partial(ParseFlags, out))
+    return out
+
+def PkgConfigGetCflags(env, name):
+    out = dict()
+    env.ParseConfig('pkg-config --cflags %s' % name, partial(ParseFlags, out))
+    return out
+
+def PkgConfigGetAllFlags(env, name):
+    out = dict()
+    env.ParseConfig('pkg-config --libs --cflags %s' % name,
+                    partial(ParseFlags, out))
+    return out
+
 
 def generate(env):
     from SCons import SConf
     SConfBase = SConf.SConfBase
+
+    if not env.has_key('PKGCONFIG_BIN'):
+        env['PKGCONFIG_BIN'] = 'pkg-config'
 
     class PkgSConfBase(SConfBase):
         def __init__(self, env, custom_tests = {}, *a, **kw):
@@ -49,3 +79,6 @@ def generate(env):
             SConfBase.__init__(self, env, pkg_tests, *a, **kw)
 
     setattr(SConf, 'SConfBase', PkgSConfBase)
+    env.AddMethod(PkgConfigGetLibs)
+    env.AddMethod(PkgConfigGetCflags)
+    env.AddMethod(PkgConfigGetAllFlags)
