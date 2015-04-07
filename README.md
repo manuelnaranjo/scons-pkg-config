@@ -33,4 +33,80 @@ Another alternative is
     ...
     e.Tool('pkg-config')
 
-## PkgConfigSupported
+Now you you will find two new methods in the Configure environment:
+_PkgConfigSupported_ and _PkgConfigCheck_, also three methods are provided in
+the caller environment _PkgConfigGetLibs_, _PkgConfigGetCflags_ and
+_PkgConfigGetAllFlags_.
+
+## Configure methods
+
+### PkgConfigSupported
+
+This method allows testing if pkg-config is supported in the current
+environment, by default it will check for 0.25 as minimun version, but you can
+override this value by passing an argument
+
+    e = Environment(tools=['pkg-config'])
+    c = e.Configure()
+    if c.PkgConfigSupported():
+        print 'pkg-config supported'
+    ...
+    c.Finish()
+
+### PkgConfigCheck
+
+This method checks if a library is provided by pkg-config by warping the
+--exists method.
+
+    ...
+    if c.PkgConfigCheck('libusb-1.0'):
+        print 'libusb-1.0 provided'
+    ...
+
+### PkgConfigGetLibs
+
+This method allows to get the flags related to library by wrapping pkg-config
+--libs.
+
+    ...
+    # the environment will get modified with the flags provided by pkg-config
+    e.PkgConfigGetLibs('libusb-1.0')
+
+    # if you don't want the calling environment to be modify you can do this
+    flags = e.PkgConfigGetLibs('libusb-1.0', modifyenv=False)
+    # now flags is a dictionary with the parsed flags
+    e.AppendUnique(**flags)
+    ...
+
+### PkgConfigGetCflags
+
+This method allows to get the flags related to c/c++ compiler by wrapping
+pkg-config --cflgas.
+
+    ...
+    # the environment will get modified with the flags provided by pkg-config
+    e.PkgConfigGetCflags('libusb-1.0')
+
+    # if you don't want the calling environment to be modify you can do this
+    flags = e.PkgConfigGetCflags('libusb-1.0', modifyenv=False)
+    ...
+
+### PkgConfigGetCflags
+
+This method allows to get the flags provided by --libs and --cflags in one call.
+
+    ...
+    # the environment will get modified with the flags provided by pkg-config
+    e.PkgConfigGetAllFlags('libusb-1.0')
+
+    # if you don't want the calling environment to be modify you can do this
+    flags = e.PkgConfigGetAllFlags('libusb-1.0', modifyenv=False)
+    ...
+
+
+
+## Cross-compiling
+
+Cross-compiling hasn't been tested yet, but an environment variable has been
+defined to allow the user of the tool to specify the name of the pkg-config
+tool to use, set variable _PPKCONFIG\_BIN_ to the desired value.
