@@ -47,21 +47,21 @@ def ParseFlags(out, env, cmd):
 
 def PkgConfigGetLibs(env, name, modifyenv = True):
     out = dict()
-    env.ParseConfig('pkg-config --libs %s' % name, partial(ParseFlags, out))
+    env.ParseConfig('pkg-config --libs \'%s\'' % name, partial(ParseFlags, out))
     if  modifyenv:
         env.AppendUnique(**out)
     return out
 
 def PkgConfigGetCflags(env, name, modifyenv = True):
     out = dict()
-    env.ParseConfig('pkg-config --cflags %s' % name, partial(ParseFlags, out))
+    env.ParseConfig('pkg-config --cflags \'%s\'' % name, partial(ParseFlags, out))
     if  modifyenv:
         env.AppendUnique(**out)
     return out
 
 def PkgConfigGetAllFlags(env, name, modifyenv = True):
     out = dict()
-    env.ParseConfig('pkg-config --libs --cflags %s' % name,
+    env.ParseConfig('pkg-config --libs --cflags \'%s\'' % name,
                     partial(ParseFlags, out))
     if  modifyenv:
         env.AppendUnique(**out)
